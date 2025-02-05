@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Topic Relationship Visualizer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.24.0/cytoscape.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #controls {
+            margin-bottom: 10px;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            font-family: monospace;
+        }
+        #cy {
+            width: 100%;
+            height: 500px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <h2>Interactive Topic Relationship Visualizer</h2>
+    <div id="controls">
+        <label>Enter JSON Structure:</label>
+        <textarea id="jsonInput">{
+    "Topic 1": ["Topic 2", "Topic 5"],
+    "Topic 2": ["Topic 3"],
+    "Topic 3": ["Topic 6", "Topic 7"],
+    "Topic 5": ["Topic 6"]
+}</textarea>
+        <button onclick="updateGraph()">Update Graph</button>
+    </div>
+    <div id="cy"></div>
+    
+    <script>
+        let cy;
+        
+        function createGraph(data) {
+            let elements = [];
+            let addedNodes = new Set();
+            
+            Object.keys(data).forEach(topic => {
+                if (!addedNodes.has(topic)) {
+                    elements.push({ data: { id: topic } });
+                    addedNodes.add(topic);
+                }
+                
+                data[topic].forEach(dependent => {
+                    if (!addedNodes.has(dependent)) {
+                        elements.push({ data: { id: dependent } });
+                        addedNodes.add(dependent);
+                    }
+                    elements.push({ data: { source: topic, target: dependent } });
+                });
+            });
+            
+            if (cy) {
+                cy.destroy();
+            }
+            
+            cy = cytoscape({
+                container: document.getElementById('cy'),
+                elements: elements,
+                style: [
+                    {
+                        selector: 'node',
+                        style: {
+                            'background-color': '#007bff',
+                            'label': 'data(id)',
+                            'color': 'white',
+                            'text-valign': 'center',
+                            'text-halign': 'center',
+                            'font-size': '12px',
+                            'width': '60px',
+                            'height': '60px'
+                        }
+                    },
+                    {
+                        selector: 'edge',
+                        style: {
+                            'width': 3,
+                            'line-color': '#aaa',
+                            'target-arrow-shape': 'triangle',
+                            'target-arrow-color': '#aaa',
+                            'curve-style': 'bezier'
+                        }
+                    }
+                ],
+                layout: {
+                    name: 'cose',
+                    animate: true
+                }
+            });
+        }
+        
+        function updateGraph() {
+            try {
+                let jsonData = JSON.parse(document.getElementById('jsonInput').value);
+                createGraph(jsonData);
+            } catch (error) {
+                alert("Invalid JSON format");
+            }
+        }
+        
+        document.addEventListener("DOMContentLoaded", function() {
+            updateGraph();
+        });
+    </script>
+</body>
+</html>
